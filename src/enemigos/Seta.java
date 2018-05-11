@@ -11,6 +11,8 @@ public class Seta extends Rectangle {
 	int cont;
 	Applet applet;
 	int cambioIMG = 0;
+	public boolean derecha = false;
+	public boolean izquierda = false;
 
 	public Seta(Image c[], int px, int py, Applet a) {
 		super(px, py, 50, 50);
@@ -23,16 +25,31 @@ public class Seta extends Rectangle {
 	}
 
 	public void actualizar() {
-		x -= velx;
-		cambioIMG++;
-		// control cambio de tiempo de sprite;
-		// Movimiento hacia la Izquierda
-		if (cambioIMG == 3) {
-			cont++;
-			cambioIMG = 0;
+		if (derecha) {
+			x -= velx;
+			cambioIMG++;
+			// control cambio de tiempo de sprite;
+			// Movimiento hacia la Izquierda
+			if (cambioIMG == 3) {
+				cont++;
+				cambioIMG = 0;
+			}
+			if (cont == 3) {
+				cont = 0;
+			}
 		}
-		if (cont == 3) {
-			cont = 0;
+		if (izquierda) {
+			x -= velx - 2;
+			cambioIMG++;
+			// control cambio de tiempo de sprite;
+			// Movimiento hacia la Izquierda
+			if (cambioIMG == 3) {
+				cont++;
+				cambioIMG = 0;
+			}
+			if (cont == 3) {
+				cont = 0;
+			}
 		}
 		// Movimiento hacia la Derecha
 
