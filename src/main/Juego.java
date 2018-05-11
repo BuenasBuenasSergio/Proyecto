@@ -29,7 +29,7 @@ public class Juego extends Applet implements Runnable {
 	Nivel2 nivel2;
 	Boolean movimineto = false;
 	Yoshi yoshi;
-	Image imgYoshi[], fondoNivel1, imgSeta[], imgVida;
+	Image imgYoshi[], fondoNivel1, imgSeta[], imgVida, imgDisparo;
 	List<Seta> seta;
 	List<Vidas> vidas;
 	List<Disparo> disparo;
@@ -41,7 +41,7 @@ public class Juego extends Applet implements Runnable {
 		imagen = createImage(1920, 1080);
 		noseve = imagen.getGraphics();
 
-		fondoNivel1 = getImage(getCodeBase(), "Resources/Levels/fondoLevel1.png");
+		fondoNivel1 = getImage(getCodeBase(), "Resources/Levels/fondoNivel1.png");
 		nivel1 = new Nivel1(fondoNivel1);
 
 		nivel2 = new Nivel2();
@@ -71,8 +71,8 @@ public class Juego extends Applet implements Runnable {
 		}
 
 		// creacion de los Disparos
+		imgDisparo = getImage(getCodeBase(), "Resources/Huevo/Huevo.png");
 		disparo = new ArrayList<Disparo>();
-		disparo.add(new Disparo(yoshi.x + yoshi.width, yoshi.y + 30, this));
 
 	}
 
@@ -113,6 +113,7 @@ public class Juego extends Applet implements Runnable {
 				seta.get(i).actualizar();
 			}
 			yoshi.caida();
+
 			try {
 				for (int i = 0; i < seta.size(); i++) {
 					if (yoshi.intersects(seta.get(i))) {
@@ -174,6 +175,9 @@ public class Juego extends Applet implements Runnable {
 		case 119:
 			yoshi.salto();
 			break;
+		case 32:
+			disparo.add(new Disparo(imgDisparo, yoshi.x + yoshi.width, yoshi.y + 30, this));
+			;
 		}
 		repaint();
 		return true;
