@@ -1,7 +1,6 @@
 package niveles;
 
 import java.applet.Applet;
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Rectangle;
@@ -18,7 +17,6 @@ public class Nivel1 extends Rectangle {
 	}
 
 	public void dibujar(Graphics g, Applet a) {
-		g.setColor(Color.green);
 		g.drawImage(imagen, x, y, width, height, a);
 	}
 

@@ -6,6 +6,8 @@ import java.awt.Image;
 import java.awt.Rectangle;
 
 import niveles.Nivel1;
+import niveles.Nivel2;
+import niveles.NivelBoss;
 
 public class Yoshi extends Rectangle {
 
@@ -52,9 +54,9 @@ public class Yoshi extends Rectangle {
 	public void leftMove() {
 		if (izquierda) {
 			cont = 8;
-			if (Nivel1.velx == 0)
+			if ((Nivel1.velx == 0) || (Nivel2.velx == 0) || (NivelBoss.velx == 0)) {
 				x -= velX;
-			// x -= velX;
+			}
 			cambioIMG++;
 			// control cambio de tiempo de sprite;
 			if (cambioIMG == 3) {
@@ -72,8 +74,9 @@ public class Yoshi extends Rectangle {
 	public void rigthMove() {
 		if (derecha) {
 			cont = 0;
-			if (Nivel1.velx == 0)
+			if ((Nivel1.velx == 0) || (Nivel2.velx == 0) || (NivelBoss.velx == 0)) {
 				x += velX;
+			}
 			cambioIMG++;
 			// control cambio de tiempo de sprite;
 			if (cambioIMG == 3) {

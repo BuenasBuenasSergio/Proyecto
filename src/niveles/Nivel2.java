@@ -1,21 +1,41 @@
 package niveles;
 
-import java.awt.Color;
+import java.applet.Applet;
 import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.Rectangle;
 
-public class Nivel2 extends Rectangle{
-	int velx= 2; 
-	
-	public Nivel2() {
-		super(0,600,2000,500);
+public class Nivel2 extends Rectangle {
+	public static int velx = 8;
+	Image imagen;
+	public boolean derecha = false;
+	public boolean izquierda = false;
+
+	public Nivel2(Image img) {
+		super(0, 0, 6000, 500);
+		imagen = img;
+
 	}
-	public void dibujar(Graphics g) {
-		g.setColor(Color.black);
-		g.fillRect(x, y, width, height);
+
+	public void dibujar(Graphics g, Applet a) {
+		g.drawImage(imagen, x, y, width, height, a);
 	}
-	
+
 	public void actualizar() {
-		x +=velx;
+
+		if (derecha) {
+			x -= velx;
+			velx = 8;
+			if (x == -2080) {
+				velx = 0;
+
+			}
+		}
+		if (izquierda) {
+			x += velx;
+			if (x >= 0) {
+				velx = 0;
+			}
+		}
 	}
 }
