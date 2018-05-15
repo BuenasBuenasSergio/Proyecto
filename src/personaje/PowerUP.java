@@ -5,12 +5,10 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Rectangle;
 
-import enemigos.Seta;
-
 public class PowerUP extends Rectangle {
 	Image imagen;
 	Applet applet;
-	int velX = Seta.velx;
+	int velX = 12;
 
 	public PowerUP(Image img, int px, int py, Applet a) {
 		super(px, py, 40, 60);
