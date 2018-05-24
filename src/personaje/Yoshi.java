@@ -14,7 +14,7 @@ public class Yoshi extends Rectangle {
 	Applet applet;
 	private Image[] imagenes;
 	int cont;// lleva la imagen en la que esta
-	int velY = 7;
+	int velY = 9;
 	public boolean derecha = false;
 	public boolean izquierda = false;
 	public static int velX = 5;
@@ -38,7 +38,7 @@ public class Yoshi extends Rectangle {
 	public void salto() {
 		if (velY == 0) {
 			y = y - 150;
-			velY = 3;
+			velY = 5;
 		}
 	}
 

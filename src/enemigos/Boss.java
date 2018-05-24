@@ -41,7 +41,7 @@ public class Boss extends Rectangle {
 			// Movimiento hacia la Izquierda
 		}
 
-		if (x >= 1850) {
+		if (x >= 1750) {
 			velx *= -1;
 			// control cambio de tiempo de sprite;
 			// Movimiento hacia la Izquierda

@@ -1,15 +1,20 @@
 package main;
 
 //Falta hacer los disparos de Bowser, poner la banderita del fin de nivel e implementar los sonidos y editar la imagen de bowser
+//Musica de fondo es .loop;
 import java.applet.Applet;
+import java.applet.AudioClip;
 import java.awt.Color;
 import java.awt.Event;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 import enemigos.Boss;
+import enemigos.DisparoBoss;
 import enemigos.Goomba;
 import enemigos.Seta;
 import niveles.Nivel1;
@@ -29,6 +34,7 @@ public class Juego extends Applet implements Runnable {
 	public static int NUMVIDAS = 3;
 	public static int VIDAS_BOSS = 3;
 	int NUM_DISPAROS = 5;
+	int tiempoDisparoBoss = 0;
 	Thread animacion;
 	Image imagen;
 	Graphics noseve;
@@ -38,7 +44,7 @@ public class Juego extends Applet implements Runnable {
 	Boolean movimineto = false;
 	Yoshi yoshi;
 	Image imgYoshi[], fondoNivel1, fondoNivel2, fondoNivelBoss, imgSeta[], imgGoomba[], imgVida, imgDisparo, imgPowerUP,
-			dead, victory, imgBoss[];
+			dead, victory, imgBoss[], imgDisparoBoss;
 	List<Seta> setaNV1;
 	List<Seta> setaNV2;
 	List<Goomba> goomba;
@@ -47,10 +53,14 @@ public class Juego extends Applet implements Runnable {
 	List<Disparo> disparo;
 	List<Disparo> cargador;
 	List<PowerUP> powerUp;
+	List<DisparoBoss> disparosBoss;
+
 	boolean vivo = true;
 	boolean level1 = true;
 	boolean level2 = false;
 	boolean levelBoss = false;
+
+	AudioClip initSong, songLevell, songLevel2, songLevelBoss, jumpSound, yoshiShootSound, yoshiHit, bowserShoot;
 
 	public void init() {
 		resize(1920, 500);
@@ -58,22 +68,10 @@ public class Juego extends Applet implements Runnable {
 		imagen = createImage(1920, 1080);
 		noseve = imagen.getGraphics();
 
-		// Creacion de Niveles
-		fondoNivel1 = getImage(getCodeBase(), "Resources/Levels/fondoNivel1.png");
-		nivel1 = new Nivel1(fondoNivel1);
-
-		fondoNivel2 = getImage(getCodeBase(), "Resources/Levels/fondoNivel2.png");
-		nivel2 = new Nivel2(fondoNivel2);
-
-		fondoNivelBoss = getImage(getCodeBase(), "Resources/Levels/fondoBoss.png");
-		nivelBoss = new NivelBoss(fondoNivelBoss);
+		createLevels();
 
 		// Creacion de Yoshi
-		imgYoshi = new Image[NUM_IMG_YOSHI];
-		for (int i = 0; i < NUM_IMG_YOSHI; i++) {
-			imgYoshi[i] = getImage(getCodeBase(), "Resources/Yoshi/yoshi" + (i + 1) + ".png");
-		}
-		yoshi = new Yoshi(imgYoshi, this, 100, nivel1.height - 150);
+		createYoshi();
 
 		// creacion Enemigos Nivel1
 		crateEnemiesLevel1();
@@ -84,31 +82,25 @@ public class Juego extends Applet implements Runnable {
 		createBoss();
 
 		// Creacion de Vidas
-		vidas = new ArrayList<Vidas>();
-		imgVida = getImage(getCodeBase(), "Resources/Vida/vida.png");
-		for (int i = 0; i < NUMVIDAS; i++) {
-			vidas.add(new Vidas(imgVida, 1600 + 50 * i, 25, this));
-		}
+		createLives();
 
 		// creacion de los Disparos y cargador
-		imgDisparo = getImage(getCodeBase(), "Resources/Huevo/Huevo.png");
-		disparo = new ArrayList<Disparo>();
-		cargador = new ArrayList<Disparo>();
-		for (int i = 0; i < NUM_DISPAROS; i++) {
-			cargador.add(new Disparo(imgDisparo, 200 + (50 * i), 50, this));
-		}
+		createShootAndMag();
 
-		// creacion de los PowerUP
-		powerUp = new ArrayList<PowerUP>();
-		imgPowerUP = getImage(getCodeBase(), "Resources/Power/Power.png");
-		for (int i = 0; i < NUM_POWER_UP; i++) {
-			powerUp.add(new PowerUP(imgPowerUP, 800 + (1370 * i), yoshi.y + yoshi.height, this));
-		}
+		// creacion de los PowerUP que recargan los tiros
+		createReloadMag();
 
-		// victoria
-		victory = getImage(getCodeBase(), "Resources/Victoria/Victoria.jpg");
-		// muerte
-		dead = getImage(getCodeBase(), "Resources/Muerte/Fin.png");
+		// Crear Imagenes Fnal Juego
+		createEndGame();
+
+		// creacion de tiros de boss
+		imgDisparoBoss = getImage(getCodeBase(), "Resources/Bowser/Disparo/Proyectil.png");
+		disparosBoss = new ArrayList<DisparoBoss>();
+
+		// Cargar Sonidos
+		createSounds();
+
+		songLevell.loop();
 	}
 
 	public void start() {
@@ -119,36 +111,26 @@ public class Juego extends Applet implements Runnable {
 	public void paint(Graphics g) {
 		noseve.setColor(Color.white);
 		noseve.fillRect(0, 0, 1920, 1080);
-
+		// pintar niveles
 		paintLevels();
 
 		// dibujar vidas
-		for (int i = 0; i < vidas.size(); i++) {
-			vidas.get(i).dibujar(noseve);
-		}
-		// dibujar disparos
-		for (int i = 0; i < disparo.size(); i++) {
-			disparo.get(i).dibujar(noseve);
-		}
-		// dibujar Cargador
-		for (int i = 0; i < NUM_DISPAROS; i++) {
-			cargador.get(i).dibujar(noseve);
-		}
-		// Dibujar powerUp
-		for (int i = 0; i < powerUp.size(); i++) {
-			powerUp.get(i).dibujar(noseve);
-		}
+		paintLives();
 
+		// dibujar Tiros y cargador(Huevos de Arriba)
+		paintShootsAndMag();
+
+		// Dibujar setas recargan cargador
+		paintMagBullets();
+
+		noseve.drawImage(imgDisparoBoss, 200, 200, 70, 40, this);
+
+		// dibujar yoshi
 		yoshi.dibujar(noseve);
 
-		if (vivo == false) {
-			animacion.stop();
-			noseve.drawImage(dead, 700, 100, 350, 100, this);
-		}
-		if (VIDAS_BOSS == 0) {
-			animacion.stop();
-			noseve.drawImage(victory, 0, 0, 1920, 500, this);
-		}
+		// pantalla fin de juego
+		paintEndGame();
+
 		g.drawImage(imagen, 0, 0, this);
 	}
 
@@ -166,13 +148,23 @@ public class Juego extends Applet implements Runnable {
 
 			// Enemigos golpeando a yoshi
 
-			enemiesHittingYoshi();
+			// enemiesHittingYoshi();
 
 			// Disparos
 
 			yoshiHitShooting();
+
 			// Recarga
 			reloadShootYoshi();
+
+			// disparos de bowser
+			if (levelBoss) {
+				tiempoDisparoBoss++;
+				if (tiempoDisparoBoss % 50 == 0) {
+					disparosBoss.add(new DisparoBoss(imgDisparoBoss, boss.x, yoshi.y + 30, this));
+					tiempoDisparoBoss = 0;
+				}
+			}
 			// Fin del Juego
 			if (NUMVIDAS == 0) {
 				vivo = false;
@@ -236,6 +228,28 @@ public class Juego extends Applet implements Runnable {
 		return true;
 	}
 
+	// Creaciones de elementos
+
+	public void createLevels() {
+		// Creacion de Niveles
+		fondoNivel1 = getImage(getCodeBase(), "Resources/Levels/fondoNivel1.png");
+		nivel1 = new Nivel1(fondoNivel1);
+		// nivel 2
+		fondoNivel2 = getImage(getCodeBase(), "Resources/Levels/fondoNivel2.png");
+		nivel2 = new Nivel2(fondoNivel2);
+		// nivel Boss
+		fondoNivelBoss = getImage(getCodeBase(), "Resources/Levels/fondoBoss.png");
+		nivelBoss = new NivelBoss(fondoNivelBoss);
+	}
+
+	public void createYoshi() {
+		imgYoshi = new Image[NUM_IMG_YOSHI];
+		for (int i = 0; i < NUM_IMG_YOSHI; i++) {
+			imgYoshi[i] = getImage(getCodeBase(), "Resources/Yoshi/yoshi" + (i + 1) + ".png");
+		}
+		yoshi = new Yoshi(imgYoshi, this, 100, nivel1.height - 150);
+	}
+
 	public void crateEnemiesLevel1() {
 		// Creacion de Seta Nivel1
 		setaNV1 = new ArrayList<Seta>();
@@ -256,7 +270,7 @@ public class Juego extends Applet implements Runnable {
 			imgGoomba[i] = getImage(getCodeBase(), "Resources/Enemigos/Goomba/Gomba" + (i + 1) + ".png");
 		}
 		for (int i = 0; i < 50; i++) {
-			goomba.add(new Goomba(imgGoomba, -1000 - (500 * i), nivel1.height - 120, this));
+			goomba.add(new Goomba(imgGoomba, -1000 - (700 * i), nivel1.height - 120, this));
 		}
 
 		// Creacion de Seta Nivel2
@@ -275,8 +289,57 @@ public class Juego extends Applet implements Runnable {
 		for (int i = 0; i < imgBoss.length; i++) {
 			imgBoss[i] = getImage(getCodeBase(), "Resources/Bowser/Bowser" + (i + 1) + ".png");
 		}
-		boss = new Boss(imgBoss, 1200, 350, this);
+		boss = new Boss(imgBoss, 1200, 300, this);
 	}
+
+	public void createLives() {
+		vidas = new ArrayList<Vidas>();
+		imgVida = getImage(getCodeBase(), "Resources/Vida/vida.png");
+		for (int i = 0; i < NUMVIDAS; i++) {
+			vidas.add(new Vidas(imgVida, 1600 + 50 * i, 25, this));
+		}
+	}
+
+	public void createShootAndMag() {
+		imgDisparo = getImage(getCodeBase(), "Resources/Huevo/Huevo.png");
+		disparo = new ArrayList<Disparo>();
+		cargador = new ArrayList<Disparo>();
+		for (int i = 0; i < NUM_DISPAROS; i++) {
+			cargador.add(new Disparo(imgDisparo, 200 + (50 * i), 50, this));
+		}
+	}
+
+	public void createReloadMag() {
+		powerUp = new ArrayList<PowerUP>();
+		imgPowerUP = getImage(getCodeBase(), "Resources/Power/Power.png");
+		for (int i = 0; i < NUM_POWER_UP; i++) {
+			powerUp.add(new PowerUP(imgPowerUP, 800 + (1370 * i), yoshi.y + yoshi.height, this));
+		}
+	}
+
+	public void createEndGame() {
+		// victory
+		victory = getImage(getCodeBase(), "Resources/Victoria/Victoria.jpg");
+		// muerte
+		dead = getImage(getCodeBase(), "Resources/Muerte/Fin.png");
+	}
+
+	public void createSounds() {
+		try {
+			initSong = getAudioClip(new URL(getDocumentBase(), "Resources/Sonidos/fondo.wav"));
+			songLevell = getAudioClip(new URL(getDocumentBase(), "Resources/Sonidos/fondo1.wav"));
+			songLevel2 = getAudioClip(new URL(getDocumentBase(), "Resources/Sonidos/fondo2.wav"));
+			songLevelBoss = getAudioClip(new URL(getDocumentBase(), "Resources/Sonidos/jefe.wav"));
+			jumpSound = getAudioClip(new URL(getDocumentBase(), "Resources/Sonidos/salto.wav"));
+			yoshiShootSound = getAudioClip(new URL(getDocumentBase(), "Resources/Sonidos/disparo.wav"));
+			yoshiHit = getAudioClip(new URL(getDocumentBase(), "Resources/Sonidos/muerto.wav"));
+			bowserShoot = getAudioClip(new URL(getDocumentBase(), "Resources/Sonidos/bowser.wav"));
+
+		} catch (MalformedURLException e) {
+		}
+	}
+
+	// pintar
 
 	public void paintLevels() {
 		if (level1) {
@@ -295,8 +358,46 @@ public class Juego extends Applet implements Runnable {
 		} else if (levelBoss) {
 			nivelBoss.dibujar(noseve, this);
 			boss.dibujar(noseve);
+			for (int i = 0; i < disparosBoss.size(); i++) {
+				disparosBoss.get(i).dibujar(noseve);
+			}
 		}
 	}
+
+	public void paintLives() {
+		for (int i = 0; i < vidas.size(); i++) {
+			vidas.get(i).dibujar(noseve);
+		}
+	}
+
+	public void paintShootsAndMag() {
+		// dibujar disparos
+		for (int i = 0; i < disparo.size(); i++) {
+			disparo.get(i).dibujar(noseve);
+		}
+		// dibujar Cargador
+		for (int i = 0; i < NUM_DISPAROS; i++) {
+			cargador.get(i).dibujar(noseve);
+		}
+	}
+
+	public void paintMagBullets() {
+		for (int i = 0; i < powerUp.size(); i++) {
+			powerUp.get(i).dibujar(noseve);
+		}
+	}
+
+	public void paintEndGame() {
+		if (vivo == false) {
+			animacion.stop();
+			noseve.drawImage(dead, 700, 100, 350, 100, this);
+		}
+		if (VIDAS_BOSS == 0) {
+			animacion.stop();
+			noseve.drawImage(victory, 0, 0, 1920, 500, this);
+		}
+	}
+	// movimientos e interacciones
 
 	public void enemiesMove() {
 		if (level1) {
@@ -312,6 +413,9 @@ public class Juego extends Applet implements Runnable {
 			}
 		} else if (levelBoss) {
 			boss.actualizar();
+			for (int i = 0; i < disparosBoss.size(); i++) {
+				disparosBoss.get(i).actualizar();
+			}
 		}
 	}
 
@@ -412,11 +516,29 @@ public class Juego extends Applet implements Runnable {
 			level1 = false;
 			level2 = true;
 			yoshi.x = 50;
+			songLevell.stop();
+			songLevel2.loop();
 		} else if ((yoshi.x == 1920) && (level2)) {
 			level2 = false;
 			levelBoss = true;
 			yoshi.x = 50;
+			songLevel2.stop();
+			songLevelBoss.loop();
 		}
+		if ((yoshi.x == 1900) && (level1)) {
+			level1 = false;
+			level2 = true;
+			yoshi.x = 50;
+			songLevell.stop();
+			songLevel2.loop();
+		} else if ((yoshi.x == 1900) && (level2)) {
+			level2 = false;
+			levelBoss = true;
+			yoshi.x = 50;
+			songLevel2.stop();
+			songLevelBoss.loop();
+		}
+
 	}
 
 	public void levelsMoveRigth() {
