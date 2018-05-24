@@ -4,6 +4,7 @@ package main;
 //Musica de fondo es .loop;
 import java.applet.Applet;
 import java.applet.AudioClip;
+import java.awt.Button;
 import java.awt.Color;
 import java.awt.Event;
 import java.awt.Graphics;
@@ -17,6 +18,7 @@ import enemigos.Boss;
 import enemigos.DisparoBoss;
 import enemigos.Goomba;
 import enemigos.Seta;
+import niveles.InitLevel;
 import niveles.Nivel1;
 import niveles.Nivel2;
 import niveles.NivelBoss;
@@ -38,13 +40,14 @@ public class Juego extends Applet implements Runnable {
 	Thread animacion;
 	Image imagen;
 	Graphics noseve;
+	InitLevel Initlevel;
 	Nivel1 nivel1;
 	Nivel2 nivel2;
 	NivelBoss nivelBoss;
 	Boolean movimineto = false;
 	Yoshi yoshi;
-	Image imgYoshi[], fondoNivel1, fondoNivel2, fondoNivelBoss, imgSeta[], imgGoomba[], imgVida, imgDisparo, imgPowerUP,
-			dead, victory, imgBoss[], imgDisparoBoss;
+	Image imgYoshi[], fondoInit, fondoNivel1, fondoNivel2, fondoNivelBoss, imgSeta[], imgGoomba[], imgVida, imgDisparo,
+			imgPowerUP, dead, victory, imgBoss[], imgDisparoBoss;
 	List<Seta> setaNV1;
 	List<Seta> setaNV2;
 	List<Goomba> goomba;
@@ -54,9 +57,11 @@ public class Juego extends Applet implements Runnable {
 	List<Disparo> cargador;
 	List<PowerUP> powerUp;
 	List<DisparoBoss> disparosBoss;
+	Button start;
 
 	boolean vivo = true;
-	boolean level1 = true;
+	boolean initlevel = true;
+	boolean level1 = false;
 	boolean level2 = false;
 	boolean levelBoss = false;
 
@@ -100,7 +105,7 @@ public class Juego extends Applet implements Runnable {
 		// Cargar Sonidos
 		createSounds();
 
-		songLevell.loop();
+		initSong.loop();
 	}
 
 	public void start() {
@@ -113,21 +118,21 @@ public class Juego extends Applet implements Runnable {
 		noseve.fillRect(0, 0, 1920, 1080);
 		// pintar niveles
 		paintLevels();
+		if (initlevel == false) {
+			// dibujar vidas
+			paintLives();
 
-		// dibujar vidas
-		paintLives();
+			// dibujar Tiros y cargador(Huevos de Arriba)
+			paintShootsAndMag();
 
-		// dibujar Tiros y cargador(Huevos de Arriba)
-		paintShootsAndMag();
+			// Dibujar setas recargan cargador
+			paintMagBullets();
 
-		// Dibujar setas recargan cargador
-		paintMagBullets();
+			noseve.drawImage(imgDisparoBoss, 200, 200, 70, 40, this);
 
-		noseve.drawImage(imgDisparoBoss, 200, 200, 70, 40, this);
-
-		// dibujar yoshi
-		yoshi.dibujar(noseve);
-
+			// dibujar yoshi
+			yoshi.dibujar(noseve);
+		}
 		// pantalla fin de juego
 		paintEndGame();
 
@@ -148,7 +153,7 @@ public class Juego extends Applet implements Runnable {
 
 			// Enemigos golpeando a yoshi
 
-			// enemiesHittingYoshi();
+			enemiesHittingYoshi();
 
 			// Disparos
 
@@ -163,6 +168,15 @@ public class Juego extends Applet implements Runnable {
 				if (tiempoDisparoBoss % 50 == 0) {
 					disparosBoss.add(new DisparoBoss(imgDisparoBoss, boss.x, yoshi.y + 30, this));
 					tiempoDisparoBoss = 0;
+					bowserShoot.play();
+				}
+				for (int i = 0; i < disparo.size(); i++) {
+					for (int j = 0; j < disparosBoss.size(); j++) {
+						if (disparo.get(i).intersects(disparosBoss.get(j))) {
+							disparo.remove(i);
+							disparosBoss.remove(j);
+						}
+					}
 				}
 			}
 			// Fin del Juego
@@ -201,6 +215,7 @@ public class Juego extends Applet implements Runnable {
 				break;
 			case 119:
 				yoshi.salto();
+				jumpSound.play();
 				break;
 			case 32:
 				yoshiShoot();
@@ -228,9 +243,24 @@ public class Juego extends Applet implements Runnable {
 		return true;
 	}
 
+	public boolean action(Event ev, Object obj) {
+		if (ev.target == start) {
+			level1 = true;
+			initSong.stop();
+			songLevell.loop();
+			initlevel = false;
+
+		}
+		return true;
+	}
 	// Creaciones de elementos
 
 	public void createLevels() {
+		start = new Button("Start");
+		this.add(start);
+		fondoInit = getImage(getCodeBase(), "Resources/Levels/portada.jpg");
+		Initlevel = new InitLevel(fondoInit);
+
 		// Creacion de Niveles
 		fondoNivel1 = getImage(getCodeBase(), "Resources/Levels/fondoNivel1.png");
 		nivel1 = new Nivel1(fondoNivel1);
@@ -342,6 +372,9 @@ public class Juego extends Applet implements Runnable {
 	// pintar
 
 	public void paintLevels() {
+		if (initlevel) {
+			Initlevel.dibujar(noseve, this);
+		}
 		if (level1) {
 			nivel1.dibujar(noseve, this);
 			for (int i = 0; i < setaNV1.size(); i++) {
@@ -391,10 +424,15 @@ public class Juego extends Applet implements Runnable {
 		if (vivo == false) {
 			animacion.stop();
 			noseve.drawImage(dead, 700, 100, 350, 100, this);
+			songLevell.stop();
+			songLevel2.stop();
+			songLevelBoss.stop();
 		}
 		if (VIDAS_BOSS == 0) {
 			animacion.stop();
 			noseve.drawImage(victory, 0, 0, 1920, 500, this);
+			songLevelBoss.stop();
+			initSong.loop();
 		}
 	}
 	// movimientos e interacciones
@@ -427,6 +465,7 @@ public class Juego extends Applet implements Runnable {
 						setaNV1.remove(i);
 						vidas.remove(NUMVIDAS - 1);
 						NUMVIDAS--;
+						yoshiHit.play();
 					}
 				}
 			}
@@ -436,6 +475,7 @@ public class Juego extends Applet implements Runnable {
 						setaNV2.remove(i);
 						vidas.remove(NUMVIDAS - 1);
 						NUMVIDAS--;
+						yoshiHit.play();
 					}
 				}
 				for (int i = 0; i < goomba.size(); i++) {
@@ -443,6 +483,7 @@ public class Juego extends Applet implements Runnable {
 						goomba.remove(i);
 						vidas.remove(NUMVIDAS - 1);
 						NUMVIDAS--;
+						yoshiHit.play();
 					}
 				}
 			}
@@ -450,7 +491,16 @@ public class Juego extends Applet implements Runnable {
 				if (boss.intersects(yoshi)) {
 					vidas.remove(NUMVIDAS - 1);
 					NUMVIDAS--;
+					yoshiHit.play();
 					yoshi.x = -500;
+				}
+				for (int i = 0; i < disparosBoss.size(); i++) {
+					if (disparosBoss.get(i).intersects(yoshi)) {
+						disparosBoss.remove(i);
+						vidas.remove(NUMVIDAS - 1);
+						NUMVIDAS--;
+						yoshiHit.play();
+					}
 				}
 			}
 		} catch (Exception e) {
@@ -512,26 +562,13 @@ public class Juego extends Applet implements Runnable {
 	}
 
 	public void levelChange() {
-		if ((yoshi.x == 1920) && (level1)) {
+		if ((yoshi.x >= 1920) && (level1)) {
 			level1 = false;
 			level2 = true;
 			yoshi.x = 50;
 			songLevell.stop();
 			songLevel2.loop();
-		} else if ((yoshi.x == 1920) && (level2)) {
-			level2 = false;
-			levelBoss = true;
-			yoshi.x = 50;
-			songLevel2.stop();
-			songLevelBoss.loop();
-		}
-		if ((yoshi.x == 1900) && (level1)) {
-			level1 = false;
-			level2 = true;
-			yoshi.x = 50;
-			songLevell.stop();
-			songLevel2.loop();
-		} else if ((yoshi.x == 1900) && (level2)) {
+		} else if ((yoshi.x >= 1920) && (level2)) {
 			level2 = false;
 			levelBoss = true;
 			yoshi.x = 50;
@@ -597,6 +634,7 @@ public class Juego extends Applet implements Runnable {
 		if (NUM_DISPAROS > 0) {
 			disparo.add(new Disparo(imgDisparo, yoshi.x + yoshi.width, yoshi.y + 30, this));
 			NUM_DISPAROS -= 1;
+			yoshiShootSound.play();
 		}
 	}
 
