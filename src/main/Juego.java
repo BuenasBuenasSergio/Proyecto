@@ -128,8 +128,6 @@ public class Juego extends Applet implements Runnable {
 			// Dibujar setas recargan cargador
 			paintMagBullets();
 
-			noseve.drawImage(imgDisparoBoss, 200, 200, 70, 40, this);
-
 			// dibujar yoshi
 			yoshi.dibujar(noseve);
 		}
